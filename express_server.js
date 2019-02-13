@@ -36,9 +36,6 @@ app.get("/urls/:shortURL", (req, res) => {
     res.render("urls_show", templateVars);
 });
 
-app.get("/urls/new", (req, res) => {
-    res.render("urls_new");
-});
 app.get("/u/:shortURL", (req, res) => {
     const longURL = urlDatabase[req.params.shortURL];
     res.redirect(longURL);
@@ -49,7 +46,26 @@ app.post("/urls", (req, res) => {
     urlDatabase[shorturl]= req.body.longURL
     res.redirect(`/urls/${shorturl}`);       
   });
+  
+  app.post("/urls/:shortURL/delete", (req, res) => { 
+    var shortURL= req.params.shortURL; //no sure about this, since nothing is being inputed how is shorturl being appended to req.body object?
+    delete urlDatabase[shortURL];
+     res.redirect("/urls");       
+   });
 
+
+
+
+
+
+
+
+
+
+
+
+
+   
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);
 });

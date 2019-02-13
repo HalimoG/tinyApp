@@ -2,6 +2,9 @@ const express = require("express");
 const app = express();
 const PORT = 8080;
 const bodyParser = require("body-parser");
+const cookieParser = require('cookie-parser')
+
+app.use(cookieParser())
 app.set("view engine", "ejs");
 app.use(bodyParser.urlencoded({extended: true}));
 //stackoverflow:https://stackoverflow.com/questions/1349404/generate-random-string-characters-in-javascript
@@ -48,8 +51,19 @@ app.post("/urls", (req, res) => {
   });
   
   app.post("/urls/:shortURL/delete", (req, res) => { 
-    var shortURL= req.params.shortURL; //no sure about this, since nothing is being inputed how is shorturl being appended to req.body object?
+    var shortURL= req.params.shortURL; 
     delete urlDatabase[shortURL];
+     res.redirect("/urls");       
+   });
+   app.post("/urls/:shortURL/update", (req, res) => { 
+    var longURL= req.body.longURL; 
+    var shortURL= req.params.shortURL;
+    urlDatabase[shortURL]= longURL;
+     res.redirect(`/urls/${shortURL}`);       
+   });
+
+   app.post("/login", (req, res) => { 
+    res.cookie("username",req.body.username);
      res.redirect("/urls");       
    });
 
@@ -60,12 +74,6 @@ app.post("/urls", (req, res) => {
 
 
 
-
-
-
-
-
-   
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);
 });

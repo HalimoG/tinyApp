@@ -4,6 +4,17 @@ const PORT = 8080;
 const bodyParser = require("body-parser");
 app.set("view engine", "ejs");
 app.use(bodyParser.urlencoded({extended: true}));
+//stackoverflow:https://stackoverflow.com/questions/1349404/generate-random-string-characters-in-javascript
+function generateRandomString() {
+    var text = "";
+    var possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+  
+    for (var i = 0; i < 6; i++){
+      text += possible.charAt(Math.floor(Math.random() * possible.length));
+    }
+    return text;
+  }
+
 
 var urlDatabase = {
   "b2xVn2": "http://www.lighthouselabs.ca",
@@ -28,10 +39,15 @@ app.get("/urls/:shortURL", (req, res) => {
 app.get("/urls/new", (req, res) => {
     res.render("urls_new");
 });
+app.get("/u/:shortURL", (req, res) => {
+    const longURL = urlDatabase[req.params.shortURL];
+    res.redirect(longURL);
+  });
 
-app.post("/urls", (req, res) => {
-    console.log(req.body);  // Log the POST request body to the console
-    res.send("Ok");         // Respond with 'Ok' (we will replace this)
+app.post("/urls", (req, res) => { 
+   var shorturl = generateRandomString();
+    urlDatabase[shorturl]= req.body.longURL
+    res.redirect(`/urls/${shorturl}`);       
   });
 
 app.listen(PORT, () => {

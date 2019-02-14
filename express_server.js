@@ -19,15 +19,28 @@ function generateRandomString() {
     return text;
   }
 
-// check if email
-function checkEmail(email, res){
+
+function checkEmail(email){
     for (var id in users){
         if( email === users[id].email){ 
-            res.send("status 404 code")
+            return true;
         }
     }
 
 }
+
+
+function retrieveUser(email, password) {
+    for (var id in users) {
+      if (email === users[id].email && password === users[id].password) {
+        return users[id];
+      }
+    } 
+  }
+
+
+
+
 
 var urlDatabase = {
   "b2xVn2": "http://www.lighthouselabs.ca",
@@ -48,17 +61,17 @@ const users = {
   }
 
 app.get("/urls", (req, res) => {
-  let templateVars = { user_id: req.cookies["user_id"], urls: urlDatabase };
+  let templateVars = { user: users[req.cookies["id"]], urls: urlDatabase }
   res.render("urls_index", templateVars);
 });
 
 app.get("/urls/new", (req, res) => {
-    let templateVars = { user_id: req.cookies["username"]}
+    let templateVars = { user: users[req.cookies["id"]]}
     res.render("urls_new", templateVars);
 });
 
 app.get("/urls/:shortURL", (req, res) => {
-    let templateVars = { username: req.cookies["username"],shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL] };
+    let templateVars = { user: users[req.cookies["id"]], shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL] };
     res.render("urls_show", templateVars);
 });
 
@@ -68,10 +81,14 @@ app.get("/u/:shortURL", (req, res) => {
   });
 
   app.get("/register", (req, res) => { 
-    let templateVars = { user_id: req.cookies["user_id"] }
-    res.render("urls_registration",templateVars);
+    let templateVars = { user: users[req.cookies["id"]]}
+    res.render("urls_registration",templateVars );
    });
 
+   app.get("/login", (req, res) => { 
+    let templateVars = { user: users[req.cookies["id"]]}
+    res.render("urls_login", templateVars);
+   });
    
 app.post("/urls", (req, res) => { 
    var shorturl = generateRandomString();
@@ -92,35 +109,45 @@ app.post("/urls", (req, res) => {
    })
 
    app.post("/login", (req, res) => { 
-    res.cookie("user_id",req.body.user_id);
-     res.redirect("/urls");       
+    const email = req.body.email;
+    const password = req.body.password;
+    
+    let user= retrieveUser(email, password);
+    if (user) {   
+    res.cookie('id', user.id);
+    res.redirect('/urls');
+    } else{
+        res.send("403 status code")
+    }
+    
    });
 
    app.post("/logout", (req, res) => { 
-    res.clearCookie("user_id")
+    
+    res.clearCookie("id")
     res.redirect("/urls");
    });
 
-
    app.post("/register", (req, res) => { 
-    
-    
     var email = req.body.email;
     var password = req.body.password;
     if(!email || !password){
         res.send("status code 404") // figure out middleware that throws err
     }
-    checkEmail(email, res);
-
-     user_id = generateRandomString();
+    
+    if(checkEmail(email)){
+        res.send("status code 404")
+    }
+     
+    else{
+        user_id = generateRandomString();
      users[user_id] = {
         id: user_id,
         email: email,
         password:password,
      }
-
-    res.cookie("user_id",user_id);
-    res.redirect("/urls");
+     res.redirect("/urls");
+    }
    });
 
 

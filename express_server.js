@@ -2,11 +2,14 @@ const express = require("express");
 const app = express();
 const PORT = 8080;
 const bodyParser = require("body-parser");
-const cookieParser = require('cookie-parser')
+const cookieSession = require('cookie-session')
 const bcrypt = require('bcrypt');
-app.use(cookieParser())
 app.set("view engine", "ejs");
 app.use(bodyParser.urlencoded({extended: true}));
+app.use(cookieSession({
+    name: 'session',
+    keys: ["TinyAppisanappabouturlshortners"],
+  }))
 //id generator 
 //stackoverflow:https://stackoverflow.com/questions/1349404/generate-random-string-characters-in-javascript
 function generateRandomString() {
@@ -70,9 +73,9 @@ const users = {
   }
 
 app.get("/urls", (req, res) => {
-  var userUrls= urlsForUser(req.cookies["id"]);
-    let templateVars = { user: users[req.cookies["id"]], urls: userUrls}
-  var user = users[req.cookies["id"]]
+  var userUrls= urlsForUser(req.session.id);
+    let templateVars = { user: users[req.session.id], urls: userUrls}
+  var user = users[req.session.id]
     if (user){
     res.render("urls_index", templateVars);
   } else {
@@ -82,7 +85,7 @@ app.get("/urls", (req, res) => {
 });
 
 app.get("/urls/new", (req, res) => {
-    const user = users[req.cookies["id"]]
+    const user = users[req.session.id];
     if (user) {
         let templateVars = { user: user}
         res.render("urls_new", templateVars); 
@@ -92,9 +95,9 @@ app.get("/urls/new", (req, res) => {
 });
 
 app.get("/urls/:shortURL", (req, res) => {
-    // var userUrls= urlsForUser(req.cookies["id"]);
+    var userUrls= urlsForUser(req.session.id);
     let templateVars = { shortURL: req.params.shortURL , longURL: urlDatabase[req.params.shortURL].longURL, user: user};
-    var user = users[req.cookies["id"]]
+    var user = users[req.session.id]
     
    
     if (user){
@@ -111,20 +114,20 @@ app.get("/u/:shortURL", (req, res) => {
   });
 
   app.get("/register", (req, res) => { 
-    var userUrls= urlsForUser(req.cookies["id"]);
-    let templateVars = { user: users[req.cookies["id"]]}
+    var userUrls= urlsForUser(req.session.id);
+    let templateVars = { user: users[req.session.id]}
     res.render("urls_registration",templateVars );
    });
 
    app.get("/login", (req, res) => { 
-    var userUrls= urlsForUser(req.cookies["id"]);
-    let templateVars = { user: users[req.cookies["id"]]}
+    var userUrls= urlsForUser(req.session.id);
+    let templateVars = { user: users[req.session.id]}
     res.render("urls_login", templateVars);
    });
    
 app.post("/urls", (req, res) => { 
    var shorturl = generateRandomString();
-   var user =  req.cookies["id"]
+   var user = req.session.id
    urlDatabase[shorturl]= {
         longURL:req.body.longURL,
         userID: user
@@ -134,7 +137,7 @@ app.post("/urls", (req, res) => {
   
   app.post("/urls/:shortURL/delete", (req, res) => { 
     
-    var isAuthorized = req.cookies["id"] === urlDatabase[req.params.shortURL].userID
+    var isAuthorized = req.session.id=== urlDatabase[req.params.shortURL].userID
   
     if(isAuthorized){
         delete urlDatabase[req.params.shortURL];
@@ -148,7 +151,7 @@ app.post("/urls", (req, res) => {
    app.post("/urls/:shortURL/update", (req, res) => { 
     var longURL= req.body.longURL; 
     var shortURL= req.params.shortURL;
-    var user = req.cookies["id"];
+    var user = req.session.id;
 
     if(user){
         urlDatabase[shortURL].longURL= longURL;
@@ -168,7 +171,9 @@ app.post("/urls", (req, res) => {
     
     let user= retrieveUser(email, password);
     if (user) {   
-    res.cookie('id', user.id);
+    
+        req.session.id = user.id;
+        // res.cookie('id', user.id);
     res.redirect('/urls');
     } else{
         res.send("403 status code")
@@ -178,7 +183,7 @@ app.post("/urls", (req, res) => {
 
    app.post("/logout", (req, res) => { 
     
-    res.clearCookie("id")
+    req.session = null;
     res.redirect("/urls");
    });
 

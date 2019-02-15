@@ -38,13 +38,22 @@ function retrieveUser(email, password) {
     } 
   }
 
+function urlsForUser(user_id){
+    let obj = {};
+    for (var shorturl in urlDatabase){
+        if (urlDatabase[shorturl].userID === user_id) {
+            obj[shorturl] = urlDatabase[shorturl].longUrl;
+        }
+    }
 
+    return obj;
+}
 
 
 
 var urlDatabase = {
-  "b2xVn2": "http://www.lighthouselabs.ca",
-  "9sm5xK": "http://www.google.com"
+  "b2xVn2":{ longUrl:"http://www.lighthouselabs.ca", userID:"user2RandomID" },
+  "9sm5xK":{ longUrl:"http://www.google.com", userID:"user2RandomID" }
 };
 
 const users = { 
@@ -56,27 +65,45 @@ const users = {
    "user2RandomID": {
       id: "user2RandomID", 
       email: "user2@example.com", 
-      password: "dishwasher-funk"
+      password: "123"
     }
   }
 
 app.get("/urls", (req, res) => {
-  let templateVars = { user: users[req.cookies["id"]], urls: urlDatabase }
-  res.render("urls_index", templateVars);
+  var userUrls= urlsForUser(req.cookies["id"]);
+    let templateVars = { user: users[req.cookies["id"]], urls: userUrls}
+  var user = users[req.cookies["id"]]
+    if (user){
+    res.render("urls_index", templateVars);
+  } else {
+      res.redirect("/login")
+  }
+  
 });
 
 app.get("/urls/new", (req, res) => {
-    let templateVars = { user: users[req.cookies["id"]]}
-    res.render("urls_new", templateVars);
+    const user = users[req.cookies["id"]]
+    if (user) {
+        let templateVars = { user: user}
+        res.render("urls_new", templateVars); 
+    } else {
+        res.redirect("/register")
+    }
 });
 
 app.get("/urls/:shortURL", (req, res) => {
-    let templateVars = { user: users[req.cookies["id"]], shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL] };
-    res.render("urls_show", templateVars);
+    let templateVars = { user: users[req.cookies["id"]], shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL].longURL };
+    var user = users[req.cookies["id"]]
+    if (user){
+    res.render("urls_index", templateVars);
+  } else {
+      res.redirect("/login")
+  }
+    
 });
 
 app.get("/u/:shortURL", (req, res) => {
-    const longURL = urlDatabase[req.params.shortURL];
+    const longURL = urlDatabase[req.params.shortURL].longURL;
     res.redirect(longURL);
   });
 
@@ -92,7 +119,13 @@ app.get("/u/:shortURL", (req, res) => {
    
 app.post("/urls", (req, res) => { 
    var shorturl = generateRandomString();
-    urlDatabase[shorturl]= req.body.longURL
+   var user =  req.cookies["id"]
+   console.log(user);
+   urlDatabase[shorturl]= {
+        longURL:req.body.longURL,
+        userID: user
+    }
+   
     res.redirect(`/urls/${shorturl}`);       
   });
   
@@ -104,7 +137,7 @@ app.post("/urls", (req, res) => {
    app.post("/urls/:shortURL/update", (req, res) => { 
     var longURL= req.body.longURL; 
     var shortURL= req.params.shortURL;
-    urlDatabase[shortURL]= longURL;
+    urlDatabase[shortURL].longURL= longURL;
      res.redirect(`/urls/${shortURL}`);       
    })
 
@@ -149,10 +182,6 @@ app.post("/urls", (req, res) => {
      res.redirect("/urls");
     }
    });
-
-
-
-
 
 
 app.listen(PORT, () => {

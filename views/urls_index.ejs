@@ -13,12 +13,15 @@
     <a href="/urls/new">Create New Tiny Url</a>
   <h2> My URLs</h2>
   <ul>
-  <p> <% for (var shorturl in urls){ %>
-    <li><%= shorturl %> - <%= urls[shorturl] %> </li> 
-    <form method="POST" action="/urls/<%= shorturl %>/delete"> 
+      
+  <p> <% for (var obj in urls){ %>
+  
+   
+    <li><%= obj %> - <%= urls[obj]%> </li> 
+    <form method="POST" action="/urls/<%= obj %>/delete"> 
         <button type="submit" class="btn btn-primary">delete</button>
     </form>
-    <a href="/urls/<%= shorturl %>">Edit</a>
+    <a href="/urls/<%= obj %>">Edit</a>
   <%}%>
 </ul> 
   </p>

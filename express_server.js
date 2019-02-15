@@ -3,7 +3,7 @@ const app = express();
 const PORT = 8080;
 const bodyParser = require("body-parser");
 const cookieParser = require('cookie-parser')
-
+const bcrypt = require('bcrypt');
 app.use(cookieParser())
 app.set("view engine", "ejs");
 app.use(bodyParser.urlencoded({extended: true}));
@@ -32,7 +32,7 @@ function checkEmail(email){
 
 function retrieveUser(email, password) {
     for (var id in users) {
-      if (email === users[id].email && password === users[id].password) {
+      if (email === users[id].email && bcrypt.compareSync(password, users[id].password)){
         return users[id];
       }
     } 
@@ -194,12 +194,14 @@ app.post("/urls", (req, res) => {
     }
      
     else{
+        
         user_id = generateRandomString();
      users[user_id] = {
         id: user_id,
         email: email,
-        password:password,
+        password: bcrypt.hashSync(password,10)
      }
+     
      res.redirect("/urls");
     }
    });

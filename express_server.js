@@ -10,7 +10,7 @@ app.use(cookieSession({
     name: 'session',
     keys: ["TinyAppisanappabouturlshortners"],
   }))
-//id generator 
+ 
 //stackoverflow:https://stackoverflow.com/questions/1349404/generate-random-string-characters-in-javascript
 function generateRandomString() {
     var text = "";
@@ -20,7 +20,7 @@ function generateRandomString() {
       text += possible.charAt(Math.floor(Math.random() * possible.length));
     }
     return text;
-  }
+}
 
 
 function checkEmail(email){
@@ -39,7 +39,7 @@ function retrieveUser(email, password) {
         return users[id];
       }
     } 
-  }
+}
 
 function urlsForUser(user_id){
     let obj = {};
@@ -71,24 +71,23 @@ const users = {
       password: "123"
     }
   }
-  app.get("/", (req, res) => {
-    
+app.get("/", (req, res) => {
     var user = users[req.session.id]
-      if (user){
-      res.redirect("/urls");
+    if (user){
+        res.redirect("/urls");
     } else {
         res.redirect("/login")
     }
     
   });
 app.get("/urls", (req, res) => {
-  var userUrls= urlsForUser(req.session.id);
+    var userUrls= urlsForUser(req.session.id);
     let templateVars = { user: users[req.session.id], urls: userUrls}
-  var user = users[req.session.id]
+    var user = users[req.session.id]
     if (user){
-    res.render("urls_index", templateVars);
+        res.render("urls_index", templateVars);
   } else {
-      res.redirect("/login")
+        res.redirect("/login")
   }
   
 });
@@ -106,38 +105,50 @@ app.get("/urls/new", (req, res) => {
 app.get("/urls/:shortURL", (req, res) => {
     var userUrls= urlsForUser(req.session.id);
     let templateVars = { shortURL: req.params.shortURL , longURL: urlDatabase[req.params.shortURL].longURL, user: userUrls};
+    
     if(!req.session.id){
-        res.send("Please Login add link to login page")
+        res.send('<h2>Please Login add link to login page</h2>')
     }
+
     if (urlDatabase[req.params.shortURL].longURL === userUrls[req.params.shortURL]){
-    res.render("urls_show", templateVars);
+        res.render("urls_show", templateVars);
   } else {
-      res.send("short URL does not belong to this account")
+        res.send('<h2>short URL does not belong to this account</h2>')
   }
     
 });
 
 app.get("/u/:shortURL", (req, res) => {
-    const longURL = urlDatabase[req.params.shortURL].longURL;
-    res.redirect(longURL);
-  });
+   
+    if(urlDatabase[req.params.shortURL]){
+        const longURL = urlDatabase[req.params.shortURL].longURL;
+        res.redirect(longURL);
+    }
+    
+    else {
+        res.send('<h2>please enter correct short url</h2>');
+    }
+});
 
-  app.get("/register", (req, res) => { 
+app.get("/register", (req, res) => { 
     var user = users[req.session.id]
+        if(user){
+            res.redirect("/urls")
+        }
+        else {
+            res.render("urls_registration");
+        }
+});
 
+app.get("/login", (req, res) => { 
+    var user = users[req.session.id]
     if(user){
         res.redirect("/urls")
     }
-    else {
-        res.render("urls_registration");
+    else{
+        res.render("urls_login");
     }
-   });
-
-   app.get("/login", (req, res) => { 
-    var userUrls= urlsForUser(req.session.id);
-    let templateVars = { user: users[req.session.id]}
-    res.render("urls_login", templateVars);
-   });
+});
    
 app.post("/urls", (req, res) => { 
    var shorturl = generateRandomString();
@@ -146,13 +157,11 @@ app.post("/urls", (req, res) => {
         longURL:req.body.longURL,
         userID: user
     }   
-    res.redirect(`/urls`);       
-  });
+    res.redirect(`/urls/${shorturl}`);       
+});
   
-  app.post("/urls/:shortURL/delete", (req, res) => { 
-    
+app.post("/urls/:shortURL/delete", (req, res) => { 
     var isAuthorized = req.session.id=== urlDatabase[req.params.shortURL].userID
-  
     if(isAuthorized){
         delete urlDatabase[req.params.shortURL];
         res.redirect("/urls");  
@@ -160,73 +169,69 @@ app.post("/urls", (req, res) => {
     else{
         res.redirect("/login")
     }
-   });
+});
    
-   app.post("/urls/:shortURL/update", (req, res) => { 
+app.post("/urls/:shortURL/update", (req, res) => { 
     var longURL= req.body.longURL; 
     var shortURL= req.params.shortURL;
     var user = req.session.id;
-
     if(user){
         urlDatabase[shortURL].longURL= longURL;
         res.redirect(`/urls`);  
 
     }else{
-
         res.redirect("/login");
     }
     
         
-   })
+});
 
-   app.post("/login", (req, res) => { 
+app.post("/login", (req, res) => { 
     const email = req.body.email;
     const password = req.body.password;
-    console.log(users);
-    
     let user= retrieveUser(email, password);
-    if (user) {   
-    
-        req.session.id = user.id;
-        // res.cookie('id', user.id);
+    if(!email || !password){
+        res.send('<h2>Please fill out both fields</h2>') 
+    }
+    else if (user) {   
+    req.session.id = user.id;
     res.redirect('/urls');
-    } else{
-        res.send("403 status code")
+    } else {
+        res.send('<h2>This account does not exist</h2>')
     }
     
-   });
+});
 
-   app.post("/logout", (req, res) => { 
-    
+app.post("/logout", (req, res) => { 
     req.session = null;
     res.redirect("/urls");
-   });
+});
 
-   app.post("/register", (req, res) => { 
+app.post("/register", (req, res) => { 
     var email = req.body.email;
     var password = req.body.password;
     if(!email || !password){
-        res.send("Please fill out both fields") // figure out middleware that throws err
+        res.send('<h2>Please fill out both fields</h2>') 
     }
     
-    if(checkEmail(email)){
-        res.send("Sorry, email already exists")
+    else if(checkEmail(email)){
+        res.send('<h2>Sorry, email already exists </h2>')
     }
      
     else{
         
         user_id = generateRandomString();
-     users[user_id] = {
-        id: user_id,
-        email: email,
-        password: bcrypt.hashSync(password,10)
-     }
+        users[user_id] = {
+            id: user_id,
+            email: email,
+            password: bcrypt.hashSync(password,10)
+    }
      
      res.redirect("/urls");
     }
-   });
+});
 
 
 app.listen(PORT, () => {
-  console.log(`Example app listening on port ${PORT}!`);
+    console.log(`Example app listening on port ${PORT}!`);
 });

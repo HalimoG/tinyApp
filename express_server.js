@@ -183,7 +183,6 @@ app.post("/urls/:shortURL/update", (req, res) => {
         res.redirect("/login");
     }
     
-        
 });
 
 app.post("/login", (req, res) => { 
@@ -194,7 +193,7 @@ app.post("/login", (req, res) => {
         res.send('<h2>Please fill out both fields</h2>') 
     }
     else if (user) {   
-    req.session.id = user.id;
+        req.session.id = user.id;
     res.redirect('/urls');
     } else {
         res.send('<h2>This account does not exist</h2>')

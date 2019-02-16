@@ -2,8 +2,9 @@
 
 <h1>TinyApp header partial</h1>
 
-<a href="/register">Register</a> <br>
+
 <%if (!user) { %>
+    <a href="/register">Register</a> <br>
     <a href="/login">Login</a> <br>
 <% } else { %>
     <h2>Logged in as: <%= user.email %></h2>

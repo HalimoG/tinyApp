@@ -71,7 +71,16 @@ const users = {
       password: "123"
     }
   }
-
+  app.get("/", (req, res) => {
+    
+    var user = users[req.session.id]
+      if (user){
+      res.redirect("/urls");
+    } else {
+        res.redirect("/login")
+    }
+    
+  });
 app.get("/urls", (req, res) => {
   var userUrls= urlsForUser(req.session.id);
     let templateVars = { user: users[req.session.id], urls: userUrls}
@@ -90,20 +99,20 @@ app.get("/urls/new", (req, res) => {
         let templateVars = { user: user}
         res.render("urls_new", templateVars); 
     } else {
-        res.redirect("/register")
+        res.redirect("/login")
     }
 });
 
 app.get("/urls/:shortURL", (req, res) => {
     var userUrls= urlsForUser(req.session.id);
-    let templateVars = { shortURL: req.params.shortURL , longURL: urlDatabase[req.params.shortURL].longURL, user: user};
-    var user = users[req.session.id]
-    
-   
-    if (user){
+    let templateVars = { shortURL: req.params.shortURL , longURL: urlDatabase[req.params.shortURL].longURL, user: userUrls};
+    if(!req.session.id){
+        res.send("Please Login add link to login page")
+    }
+    if (urlDatabase[req.params.shortURL].longURL === userUrls[req.params.shortURL]){
     res.render("urls_show", templateVars);
   } else {
-      res.redirect("/login")
+      res.send("short URL does not belong to this account")
   }
     
 });
@@ -114,9 +123,14 @@ app.get("/u/:shortURL", (req, res) => {
   });
 
   app.get("/register", (req, res) => { 
-    var userUrls= urlsForUser(req.session.id);
-    let templateVars = { user: users[req.session.id]}
-    res.render("urls_registration",templateVars );
+    var user = users[req.session.id]
+
+    if(user){
+        res.redirect("/urls")
+    }
+    else {
+        res.render("urls_registration");
+    }
    });
 
    app.get("/login", (req, res) => { 
@@ -132,7 +146,7 @@ app.post("/urls", (req, res) => {
         longURL:req.body.longURL,
         userID: user
     }   
-    res.redirect(`/urls/${shorturl}`);       
+    res.redirect(`/urls`);       
   });
   
   app.post("/urls/:shortURL/delete", (req, res) => { 
@@ -168,6 +182,7 @@ app.post("/urls", (req, res) => {
    app.post("/login", (req, res) => { 
     const email = req.body.email;
     const password = req.body.password;
+    console.log(users);
     
     let user= retrieveUser(email, password);
     if (user) {   
@@ -191,11 +206,11 @@ app.post("/urls", (req, res) => {
     var email = req.body.email;
     var password = req.body.password;
     if(!email || !password){
-        res.send("status code 404") // figure out middleware that throws err
+        res.send("Please fill out both fields") // figure out middleware that throws err
     }
     
     if(checkEmail(email)){
-        res.send("status code 404")
+        res.send("Sorry, email already exists")
     }
      
     else{
